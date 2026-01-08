@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+
 from pygam import LinearGAM, s
 
 
@@ -11,7 +12,7 @@ def write_age_expected_values(feature_params):
     feature = feature_params['feature']
     model_dir = feature_params['model_dir']
 
-    data_wide = pd.read_csv(f"{model_dir}/data/data_wide.csv")
+    data_wide = pd.read_csv(f'{model_dir}/data/data_wide.csv')
     X = np.asarray(data_wide['age']).reshape(-1, 1)
     y = np.asarray(data_wide[feature])
 

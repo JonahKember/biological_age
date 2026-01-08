@@ -84,8 +84,8 @@ feature_values <- seq(
 # Vary time-horizon values.
 tend_values <- seq(
   0,
-  max(data_wide[[duration_col]], na.rm=TRUE),
-  length.out=n_grid
+  max(data_wide[[duration_col]], na.rm = TRUE),
+  length.out = n_grid
 )
 
 # Create prediction grid (age set to mean value).

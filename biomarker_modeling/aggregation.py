@@ -1,7 +1,7 @@
-import json
 import numpy as np
 import pandas as pd
 
+from lifelines import CoxPHFitter
 from sklearn.impute import KNNImputer
 from scipy.interpolate import RegularGridInterpolator
 
@@ -32,16 +32,14 @@ def _get_delta_age_estimator(delta_age_array):
     return delta_age_estimator
 
 
+def get_delta_age_dataframe(config):
 
-def get_delta_age_dataframe(feature_data_csv, delta_age_paths_json, output_dir):
-
-    # Load dictionary mapping features (keys) to the path of their delta-age array (values).
-    with open(delta_age_paths_json, 'r') as f:
-        delta_age_paths = json.load(f)
+    # Merge all biomarker delta-ages.
+    output_dir = config['output_dir']
+    features = config['features']
 
     # Load dataframe including all features and age.
-    features = list(delta_age_paths.keys())
-    df = pd.read_csv(feature_data_csv)
+    df = pd.read_csv(config['dataframe'])
 
     # Impute missing data.
     imputer = KNNImputer()
@@ -52,9 +50,33 @@ def get_delta_age_dataframe(feature_data_csv, delta_age_paths_json, output_dir):
     # Calculate delta-age for each feature.
     df_delta_ages = pd.DataFrame()
     for feature in features:
-        delta_age_estimator = _get_delta_age_estimator(delta_age_paths[feature])
+        delta_age_estimator = _get_delta_age_estimator(f'{output_dir}/{feature}/model/delta_age-array.csv')
         df_delta_ages[feature] = delta_age_estimator(df_imputed[feature], df_imputed['age'])
 
     df_delta_ages.to_csv(f'{output_dir}/biomarker_delta_ages.csv', index=False)
 
     return df_delta_ages
+
+
+def get_biological_age(config):
+
+    output_dir = config['output_dir']
+    df = pd.read_csv(config['dataframe'])
+    df_deltas = pd.read_csv(f'{output_dir}/biomarker_delta_ages.csv')
+
+    # Calculate final biological-age.
+    df_cox = pd.DataFrame()
+    df_cox['duration'] = df[config['duration_col']]
+    df_cox['event'] = df[config['event_col']]
+    df_cox['deltas'] = df_deltas.sum(axis=1)
+
+    cph = CoxPHFitter().fit(df_cox, 'duration', 'event')
+    hazard_ratio = cph.summary['exp(coef)'].item()
+    hazard_ratio_conversion = (np.log(hazard_ratio) / np.log(2)) * config['mrdt']
+
+    delta_age = df_cox['deltas'] * hazard_ratio_conversion
+    bio_age = df['age'] + delta_age
+
+    df_deltas['delta_age'] = delta_age
+    df_deltas['bio_age'] = bio_age
+    df_deltas.to_csv(f'{output_dir}/biomarker_delta_ages.csv', index=False)

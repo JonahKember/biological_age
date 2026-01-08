@@ -19,9 +19,10 @@ def main():
 
     # Fit model for each biomarker.
     biomarker_info = pd.read_csv(config['biomarker_info'], index_col='feature')
-    features = biomarker_info.index[biomarker_info.index.isin(df.columns)]
+    config['features'] = biomarker_info.index[biomarker_info.index.isin(df.columns)]
 
-    for feature in features:
+
+    for feature in config['features']:
         print(f'Fitting model for {feature}...')
 
         feature_params = config.copy()
@@ -40,8 +41,8 @@ def main():
             (df_marker[feature] >= df_marker[feature].quantile(0.025)) &
             (df_marker[feature] <= df_marker[feature].quantile(0.975))
         ]
-        df_marker.to_csv(f"{feature_params['model_dir']}/input_data.csv", index=False)
-        feature_params['input_data'] = f"{feature_params['model_dir']}/input_data.csv"
+        feature_params['input_data'] = f'{output_dir}/{feature}/input_data.csv'
+        df_marker.to_csv(feature_params['input_data'], index=False)
 
 
         biomarker_modeling.model_fitting.fit(feature_params)
@@ -52,41 +53,9 @@ def main():
         biomarker_modeling.utils.write_metadata(feature_params)
 
 
-
-
-
-#     # Merge all biomarker delta-ages.
-#     delta_age_paths = [f'{output_dir}/{feature}/model/delta_age-array.csv' for feature in features]
-#     delta_age_paths = dict(zip(features, delta_age_paths))
-
-#     with open(f'{output_dir}/delta_age_paths.json','w') as f:
-#         json.dump(delta_age_paths, f, indent=4)
-
-#     delta_age_df = biomarker_modeling.aggregation.get_delta_age_dataframe(
-#         config['dataframe'],
-#         f'{output_dir}/delta_age_paths.json',
-#         output_dir
-#     )
-
-
-#     # Calculate final biological-age.
-#     df_cox = pd.DataFrame()
-#     df_cox[duration_col] = df[duration_col]
-#     df_cox[event_col] = df[event_col]
-#     df_cox['deltas'] = delta_age_df.sum(axis=1)
-
-
-#     cph = CoxPHFitter().fit(df_cox, duration_col, event_col)
-
-#     hazard_ratio = cph.summary['exp(coef)'].item()
-#     hazard_ratio_conversion = (np.log(hazard_ratio) / np.log(2)) * mrdt
-
-#     delta_age = df_cox['deltas'] * hazard_ratio_conversion
-#     bio_age = df['age'] + delta_age
-
-#     delta_age_df['delta_age'] = delta_age
-#     delta_age_df['bio_age'] = bio_age
-#     delta_age_df.to_csv(f'{output_dir}/biomarker_delta_ages.csv', index=False)
+    # Calculate delta-age for each biomarker.
+    biomarker_modeling.aggregation.get_delta_age_dataframe(config)
+    biomarker_modeling.aggregation.get_biological_age(config)
 
 
 if __name__ == '__main__':
