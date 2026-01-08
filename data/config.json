@@ -1,0 +1,11 @@
+{
+    "output_dir":"/Users/jkember/Documents/nia_health/NHANES/biological_age/config.json",
+
+    "event_col": "MORTSTAT",
+    "duration_col": "PERMTH_EXM",
+
+    "dataframes":[
+        "NHANES_data_male.csv",
+        "NHANES_data_female.csv"
+    ]
+}
