@@ -4,7 +4,4 @@ data/NHANES_data_female.csv
 data/output_male
 data/output_female
 
-biomarker_modeling/r/testing.ipynb
-contribution_inspection/testing.ipynb
-custom_modeling/testing.ipynb
-model_aggregating/testing.ipynb
+**/testing.ipynb
