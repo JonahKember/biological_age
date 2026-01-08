@@ -81,22 +81,6 @@ def get_feature_weights(df, output_dir, min_weight=.01, min_error=0.9):
     Compute non-negative feature weights that approximate the direction of maximal correlation.
     """
 
-    # df_norm = zscore(df)
-    # pc1_scores = PCA(n_components=1).fit_transform(df_norm).ravel()
-
-    # non_neg_model = lsq_linear(df_norm, pc1_scores, bounds=(min_weight, np.inf))
-    # non_neg_betas = non_neg_model.x
-
-    # approx = df_norm @ non_neg_betas
-    # error = r2_score(pc1_scores, approx)
-
-    # if error < min_error:
-    #     print(f'Warning: non-negative approximation performed poorly: R2={error:.3f}')
-
-    # # Normalize weights to unit length.
-    # non_neg_betas /= np.linalg.norm(non_neg_betas)
-    # weights = dict(zip(df.columns, non_neg_betas))
-
     df_norm = zscore(df)
 
     pca = PCA(n_components=1).fit(df_norm)

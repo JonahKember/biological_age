@@ -29,7 +29,7 @@ def write_age_expected_values(model):
     return age_expected_value
 
 
-def write_delta_age(model, mrdt=8):
+def write_delta_age(model, mrdt=7.5):
     """
     Compute delta age for each feature value relative to age-expected value
     using the mortality rate doubling time (MRDT) and cumulative hazard.
