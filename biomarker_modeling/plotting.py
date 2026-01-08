@@ -81,30 +81,6 @@ def _plot_delta_age(model):
 
 def _plot_hazard_ratio(model):
 
-    # # Get hazard ratio.
-    # cumulative_hazard_df = pd.read_csv(f'{model.model_dir}/model/cumulative_hazard-array.csv', index_col=0)
-    # feature_vals = cumulative_hazard_df.index
-
-    # reference_value = pd.read_csv(f'{model.model_dir}/data/data_wide.csv')[model.feature].mean()
-    # reference_idx = np.argmin(np.abs(reference_value - feature_vals)).item()
-
-    # hazard_max_follow_up = cumulative_hazard_df.iloc[:,-1]
-    # hazard_ratio = hazard_max_follow_up / hazard_max_follow_up.iloc[reference_idx]
-
-
-    # # Get bootstrapped standard error of hazard ratio.
-    # bootstraps =glob(f'{model.model_dir}/model/bootstrapped_estimates/cumulative_hazard-array*.csv')
-    # bs_hazard_ratios = []
-
-    # for bootstrap in bootstraps:
-
-    #     bs_cumulative_hazard_df = pd.read_csv(bootstrap, index_col=0)
-    #     bs_hazard_max_follow_up = bs_cumulative_hazard_df.iloc[:,-1]
-    #     bs_hazard_ratio = bs_hazard_max_follow_up / bs_hazard_max_follow_up.iloc[reference_idx]
-    #     bs_hazard_ratios.append(bs_hazard_ratio.to_numpy())
-
-    # hazard_ratio_err = np.array(bs_hazard_ratios).std(axis=0)
-
     hazard_ratio_df = pd.read_csv(f'{model.model_dir}/model/hazard_ratio.csv', index_col='feature')
     feature_vals = hazard_ratio_df.index.astype(float)
     hazard_ratio = hazard_ratio_df['HR']

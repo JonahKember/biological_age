@@ -1,0 +1,10 @@
+{
+    "output_dir": "output",
+    "dataframe": "NHANES_data_male.csv",
+
+    "event_col": "MORTSTAT",
+    "duration_col": "PERMTH_EXM",
+    "age_col": "age",
+
+    "mrdt" : 7.5
+}
