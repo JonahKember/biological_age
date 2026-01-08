@@ -13,14 +13,13 @@ def fit(model):
     cmd = [
         "Rscript",
         script_path,
-        f"--data_path={model.data_path}",
-        f"--duration_col={model.duration_col}",
-        f"--event_col={model.event_col}",
-        f"--feature={model.feature}",
-        f"--model_dir={model.model_dir}",
-        f"--ped_by={model.ped_by}",
-        f"--n_grid={model.n_grid}",
-        f"--n_bootstraps={model.n_bootstraps}"
+        f"--data_path={model['input_data']}",
+        f"--duration_col={model['duration_col']}",
+        f"--event_col={model['event_col']}",
+        f"--feature={model['feature']}",
+        f"--model_dir={model['model_dir']}",
+        f"--ped_by={model['ped_by']}",
+        f"--n_grid={model['n_grid']}"
     ]
 
     subprocess.run(cmd, check=True)

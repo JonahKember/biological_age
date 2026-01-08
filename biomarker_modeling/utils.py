@@ -6,27 +6,29 @@ import pandas as pd
 from glob import glob
 
 
-def write_metadata(model):
+def write_metadata(feature_params):
 
-    df = pd.read_csv(model.data_path)
+    data_path = feature_params['input_data']
+    feature = feature_params['feature']
+
+    df = pd.read_csv(data_path)
     meta = {
-        "feature": model.feature,
-        "duration_col": model.duration_col,
-        "event_col": model.event_col,
-        "ped_by": model.ped_by,
-        "n_grid": model.n_grid,
+        "feature": feature_params['feature'],
+        "units": feature_params['units'],
+        "label": feature_params['label'],
+        "duration_col": feature_params['duration_col'],
+        "event_col": feature_params['event_col'],
+        "ped_by": feature_params['ped_by'],
+        "n_grid": feature_params['n_grid'],
         "n_obs": len(df),
-        "n_deaths": int(df[model.event_col].sum()),
-        "feature_min": float(df[model.feature].min()),
-        "feature_max": float(df[model.feature].max()),
-        "feature_mean": float(df[model.feature].mean()),
-        "feature_std": float(df[model.feature].std()),
+        "n_deaths": int(df[feature_params['event_col']].sum()),
+        "feature_min": float(df[feature].min()),
+        "feature_max": float(df[feature].max()),
+        "feature_mean": float(df[feature].mean()),
+        "feature_std": float(df[feature].std()),
     }
 
-    if model.feature_info:
-        meta["feature_info"] = model.feature_info
-
-    with open(os.path.join(model.model_dir, "meta.json"), "w") as f:
+    with open(os.path.join(feature_params['model_dir'], "meta.json"), "w") as f:
         json.dump(meta, f, indent=2)
 
     return

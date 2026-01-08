@@ -3,9 +3,9 @@
 biomarker_info.csv
 NHANES_data_male.csv
 NHANES_data_female.csv
-data/output_male
-data/output_female
 
 **/testing.ipynb
 
 output
+output_male
+output_female

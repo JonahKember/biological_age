@@ -6,29 +6,21 @@ import matplotlib.gridspec as gridspec
 from glob import glob
 
 
-def save_plots(model):
-    _plot_cumulative_hazard_array(model)
-    _plot_delta_age(model)
-    _plot_hazard_ratio(model)
+def save_plots(feature_params):
+    _plot_cumulative_hazard_array(feature_params)
+    _plot_delta_age(feature_params)
+    _plot_hazard_ratio(feature_params)
 
 
-def _get_feature_label(model):
+def _plot_cumulative_hazard_array(feature_params):
 
-    # Set y-axis label
-    if model.feature_info is None:
-        feature_label = model.feature
-    else:
-        label = model.feature_info.get('label', model.feature)
-        units = model.feature_info.get('units', '')
-        feature_label = f"{label}\n{units}" if units else label
-
-        return feature_label
-
-
-def _plot_cumulative_hazard_array(model):
+    model_dir = feature_params['model_dir']
+    feature = feature_params['feature']
+    feature_label = feature_params['label']
+    data_path = feature_params['input_data']
 
     # Load hazard array
-    cumulative_hazard_df = pd.read_csv(f'{model.model_dir}/model/cumulative_hazard-array.csv', index_col=0)
+    cumulative_hazard_df = pd.read_csv(f'{model_dir}/model/cumulative_hazard-array.csv', index_col=0)
 
     time_vals = cumulative_hazard_df.columns.astype(np.float64)
     feature_vals = cumulative_hazard_df.index.astype(np.float64)
@@ -43,26 +35,30 @@ def _plot_cumulative_hazard_array(model):
 
     ax.figure.colorbar(contour, ax=ax, label='Hazard', shrink=0.8)
     ax.set_xlabel('Years')
-    feature_label = _get_feature_label(model)
     ax.set_ylabel(feature_label)
 
-    feature_obs = pd.read_csv(model.data_path)[model.feature]
+    feature_obs = pd.read_csv(data_path)[feature]
     ax.set_ylim([np.min(feature_obs), np.max(feature_obs)])
 
     # Save.
-    fig.savefig(f'{model.model_dir}/plots/cumulative_hazard-array.png', dpi=1000, bbox_inches='tight')
+    fig.savefig(f'{model_dir}/plots/cumulative_hazard-array.png', dpi=1000, bbox_inches='tight')
     plt.close(fig)
 
 
 
-def _plot_delta_age(model):
+def _plot_delta_age(feature_params):
 
-    delta_age = pd.read_csv(f'{model.model_dir}/model/delta_age-array.csv', index_col=0)
+    model_dir = feature_params['model_dir']
+    feature = feature_params['feature']
+    feature_label = feature_params['label']
+
+
+    delta_age = pd.read_csv(f'{model_dir}/model/delta_age-array.csv', index_col=0)
     feature_values = delta_age.index
 
-    age_expected_values = pd.read_csv(f'{model.model_dir}/model/age_expected_feature_values-vector.csv', index_col=0)
+    age_expected_values = pd.read_csv(f'{model_dir}/model/age_expected_feature_values-vector.csv', index_col=0)
     age_values = age_expected_values.index.values
-    expected_values = age_expected_values[model.feature]
+    expected_values = age_expected_values[feature]
 
     c_lim = np.max(np.abs(delta_age))
 
@@ -70,22 +66,26 @@ def _plot_delta_age(model):
     contour = ax.contourf(age_values, feature_values, delta_age, levels=10, cmap='coolwarm', vmin=-c_lim, vmax=c_lim)
     ax.contour(age_values,feature_values, delta_age, levels=10, colors='w', linewidths=0.2)
     ax.set_xlabel('age')
-    feature_label = _get_feature_label(model)
     ax.set_ylabel(feature_label)
 
     ax.figure.colorbar(contour, ax=ax, label='$\Delta$ age', shrink=0.8)
     ax.plot(age_values, expected_values, color='k', lw=3, linestyle='--')
-    fig.savefig(f'{model.model_dir}/plots/delta_age.png', dpi=1000, bbox_inches='tight')
+    fig.savefig(f'{model_dir}/plots/delta_age.png', dpi=1000, bbox_inches='tight')
     plt.close(fig)
 
 
-def _plot_hazard_ratio(model):
+def _plot_hazard_ratio(feature_params):
 
-    hazard_ratio_df = pd.read_csv(f'{model.model_dir}/model/hazard_ratio.csv', index_col='feature')
+    model_dir = feature_params['model_dir']
+    feature = feature_params['feature']
+    feature_label = feature_params['label']
+    data_path = feature_params['input_data']
+
+    hazard_ratio_df = pd.read_csv(f'{model_dir}/model/hazard_ratio.csv', index_col='feature')
     feature_vals = hazard_ratio_df.index.astype(float)
-    hazard_ratio = hazard_ratio_df['HR']
-    hazard_ratio_lower = hazard_ratio_df['HR_lower']
-    hazard_ratio_upper = hazard_ratio_df['HR_upper']
+    hazard_ratio = hazard_ratio_df['hr']
+    hazard_ratio_lower = hazard_ratio_df['hr_lower']
+    hazard_ratio_upper = hazard_ratio_df['hr_upper']
 
     # Plot.
     fig = plt.figure(figsize=(8,5))
@@ -110,7 +110,7 @@ def _plot_hazard_ratio(model):
 
 
     # Add boxplot showing distribution of feature to top of plot.
-    feature_obs = pd.read_csv(model.data_path)[model.feature]
+    feature_obs = pd.read_csv(data_path)[feature]
 
     sns.boxplot(feature_obs, color='w', ax=ax_hist, orient='h', showfliers=False)
     ax_hist.xaxis.set_visible(False)
@@ -118,9 +118,8 @@ def _plot_hazard_ratio(model):
 
     sns.despine(ax=ax_main, top=True)
     sns.despine(ax=ax_hist,left=True, bottom=True)
-    feature_label = _get_feature_label(model)
     ax_main.set_xlabel(feature_label)
 
     # Save
-    fig.savefig(f'{model.model_dir}/plots/hazard_ratio.png', dpi=1000, bbox_inches='tight')
+    fig.savefig(f'{model_dir}/plots/hazard_ratio.png', dpi=1000, bbox_inches='tight')
     plt.close(fig)

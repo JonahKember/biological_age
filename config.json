@@ -1,10 +1,14 @@
 {
-    "output_dir": "output",
-    "dataframe": "NHANES_data_male.csv",
+    "output_dir": "output_female",
+
+    "biomarker_info": "biomarker_info.csv",
+    "dataframe": "NHANES_data_female.csv",
 
     "event_col": "MORTSTAT",
     "duration_col": "PERMTH_EXM",
     "age_col": "age",
 
-    "mrdt" : 7.5
+    "mrdt" : 7.5,
+    "ped_by": 1,
+    "n_grid": 100
 }
