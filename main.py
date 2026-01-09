@@ -1,12 +1,13 @@
 import os
 import json
+import argparse
 import pandas as pd
 import biomarker_modeling
 
-def main():
+def main(config_path):
 
     # Get pipeline parameters from config.json.
-    with open('config.json','r') as f:
+    with open(config_path,'r') as f:
         config = json.load(f)
 
     df           = pd.read_csv(config['dataframe'])
@@ -59,4 +60,9 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+
+    parser = argparse.ArgumentParser(description='Run biological age pipeline')
+    parser.add_argument('config', type=str, help='Path to config.json')
+    args = parser.parse_args()
+
+    main(args.config)
