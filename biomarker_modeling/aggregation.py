@@ -1,3 +1,4 @@
+import pickle
 import numpy as np
 import pandas as pd
 
@@ -34,16 +35,25 @@ def _get_delta_age_estimator(delta_age_array):
 
 def get_delta_age_dataframe(config):
 
+    print('Calculating delta-age for each biomarker...')
+
     # Merge all biomarker delta-ages.
-    output_dir = config['output_dir']
-    features = config['features']
+    output_dir   = config['output_dir']
+    features     = config['features']
+    dataframe    = config['dataframe']
+    event_col    = config['event_col']
+    duration_col = config['duration_col']
 
     # Load dataframe including all features and age.
-    df = pd.read_csv(config['dataframe'])
+    df = pd.read_csv(dataframe)
 
     # Impute missing data.
     imputer = KNNImputer()
-    df_imputed = pd.DataFrame(imputer.fit_transform(df[features]), columns=features)
+    imputer.fit(df[features])
+    df_imputed = pd.DataFrame(imputer.transform(df[features]), columns=features)
+    with open(f'{output_dir}/imputer.pkl', 'wb') as f:
+        pickle.dump(imputer, f)
+
     df_imputed['age'] = df['age']
     df_imputed.to_csv(f'{output_dir}/data_imputed.csv', index=False)
 
@@ -53,12 +63,32 @@ def get_delta_age_dataframe(config):
         delta_age_estimator = _get_delta_age_estimator(f'{output_dir}/{feature}/model/delta_age-array.csv')
         df_delta_ages[feature] = delta_age_estimator(df_imputed[feature], df_imputed['age'])
 
+    # Weight delta-ages by their ability to predict mortality.
+    concordance_index = {}
+    for feature in features:
+
+        df_cox = pd.DataFrame()
+        df_cox[event_col] = df[event_col]
+        df_cox[duration_col] = df[duration_col]
+        df_cox[feature] = df_delta_ages[feature]
+
+        cph = CoxPHFitter().fit(df_cox.dropna(), event_col=event_col, duration_col=duration_col)
+        concordance_index[feature] = cph.concordance_index_
+
+    weights = pd.Series(concordance_index).sort_values()
+    weights = (weights - weights.min()) / (weights.max() - weights.min())
+    weights.to_csv(f'{output_dir}/biomarker_weights.csv')
+
+    df_delta_ages = df_delta_ages * weights
+
     df_delta_ages.to_csv(f'{output_dir}/biomarker_delta_ages.csv', index=False)
 
     return df_delta_ages
 
 
 def get_biological_age(config):
+
+    print('Calculating biological-age...')
 
     output_dir = config['output_dir']
     df = pd.read_csv(config['dataframe'])
@@ -69,6 +99,7 @@ def get_biological_age(config):
     df_cox['duration'] = df[config['duration_col']]
     df_cox['event'] = df[config['event_col']]
     df_cox['deltas'] = df_deltas.sum(axis=1)
+    df_cox = df_cox.dropna()
 
     cph = CoxPHFitter().fit(df_cox, 'duration', 'event')
     hazard_ratio = cph.summary['exp(coef)'].item()

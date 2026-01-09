@@ -22,7 +22,6 @@ def main(config_path):
     biomarker_info = pd.read_csv(config['biomarker_info'], index_col='feature')
     config['features'] = biomarker_info.index[biomarker_info.index.isin(df.columns)]
 
-
     for feature in config['features']:
         print(f'Fitting model for {feature}...')
 
@@ -52,7 +51,6 @@ def main(config_path):
 
         biomarker_modeling.plotting.save_plots(feature_params)
         biomarker_modeling.utils.write_metadata(feature_params)
-
 
     # Calculate delta-age for each biomarker.
     biomarker_modeling.aggregation.get_delta_age_dataframe(config)
