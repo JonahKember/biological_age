@@ -14,6 +14,7 @@ def main(config_path):
     event_col    = config['event_col']
     duration_col = config['duration_col']
     output_dir   = config['output_dir']
+    fit_model    = eval(config['fit_model'])
 
     os.makedirs(config['output_dir'], exist_ok=True)
     df = df[df[duration_col] > 0]
@@ -22,7 +23,10 @@ def main(config_path):
     biomarker_info = pd.read_csv(config['biomarker_info'], index_col='feature')
     config['features'] = biomarker_info.index[biomarker_info.index.isin(df.columns)]
 
+
     for feature in config['features']:
+        if not fit_model: continue
+
         print(f'Fitting model for {feature}...')
 
         feature_params = config.copy()

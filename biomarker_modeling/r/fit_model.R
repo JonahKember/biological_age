@@ -116,7 +116,7 @@ model_pam <- gam(
   family  = poisson(),
   method  = "REML",
   offset  = data_long$offset,
-  gamma   = 1.5
+  gamma   = 1
 )
 
 # Compute cumulative hazard over time

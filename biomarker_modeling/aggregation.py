@@ -1,6 +1,8 @@
 import pickle
 import numpy as np
 import pandas as pd
+from scipy.optimize import nnls
+from scipy.stats import zscore
 
 from lifelines import CoxPHFitter
 from sklearn.impute import KNNImputer
@@ -33,7 +35,8 @@ def _get_delta_age_estimator(delta_age_array):
     return delta_age_estimator
 
 
-def get_delta_age_dataframe(config):
+
+def get_delta_age_dataframe(config, mode='train'):
 
     print('Calculating delta-age for each biomarker...')
 
@@ -47,15 +50,27 @@ def get_delta_age_dataframe(config):
     # Load dataframe including all features and age.
     df = pd.read_csv(dataframe)
 
-    # Impute missing data.
-    imputer = KNNImputer()
-    imputer.fit(df[features])
-    df_imputed = pd.DataFrame(imputer.transform(df[features]), columns=features)
-    with open(f'{output_dir}/imputer.pkl', 'wb') as f:
-        pickle.dump(imputer, f)
+    if mode == 'train':
 
-    df_imputed['age'] = df['age']
-    df_imputed.to_csv(f'{output_dir}/data_imputed.csv', index=False)
+        # Impute missing data.
+        imputer = KNNImputer(keep_empty_features=True)
+        imputer.fit(df[features])
+        df_imputed = pd.DataFrame(imputer.transform(df[features]), columns=features)
+        with open(f'{output_dir}/imputer.pkl', 'wb') as f:
+            pickle.dump(imputer, f)
+
+        df_imputed['age'] = df['age']
+        df_imputed.to_csv(f'{output_dir}/data_imputed.csv', index=False)
+
+    if mode == 'test':
+
+        # Impute missing data.
+        with open(f'{output_dir}/imputer.pkl', 'rb') as f:
+            imputer = pickle.load(f)
+
+        df_imputed = pd.DataFrame(imputer.fit_transform(df[features]), columns=features)
+        df_imputed['age'] = df['age']
+        df_imputed.to_csv(f'{output_dir}/data_imputed.csv', index=False)
 
     # Calculate delta-age for each feature.
     df_delta_ages = pd.DataFrame()
@@ -63,24 +78,30 @@ def get_delta_age_dataframe(config):
         delta_age_estimator = _get_delta_age_estimator(f'{output_dir}/{feature}/model/delta_age-array.csv')
         df_delta_ages[feature] = delta_age_estimator(df_imputed[feature], df_imputed['age'])
 
-    # Weight delta-ages by their ability to predict mortality.
-    concordance_index = {}
-    for feature in features:
 
-        df_cox = pd.DataFrame()
-        df_cox[event_col] = df[event_col]
-        df_cox[duration_col] = df[duration_col]
-        df_cox[feature] = df_delta_ages[feature]
+    if mode == 'train':
 
-        cph = CoxPHFitter().fit(df_cox.dropna(), event_col=event_col, duration_col=duration_col)
-        concordance_index[feature] = cph.concordance_index_
+        # Weight delta-ages by their ability to predict mortality.
+        concordance_index = {}
+        for feature in features:
 
-    weights = pd.Series(concordance_index).sort_values()
-    weights = (weights - weights.min()) / (weights.max() - weights.min())
-    weights.to_csv(f'{output_dir}/biomarker_weights.csv')
+            df_cox = pd.DataFrame()
+            df_cox[event_col] = df[event_col]
+            df_cox[duration_col] = df[duration_col]
+            df_cox[feature] = df_delta_ages[feature]
+
+            cph = CoxPHFitter().fit(df_cox.dropna(), event_col=event_col, duration_col=duration_col)
+            concordance_index[feature] = cph.concordance_index_
+
+        weights = pd.Series(concordance_index).sort_values()
+        weights = (weights - weights.min()) / (weights.max() - weights.min())
+        weights.to_csv(f'{output_dir}/biomarker_weights.csv')
+
+    if mode == 'test':
+        weights = pd.read_csv(f'{output_dir}/biomarker_weights.csv', index_col=0)
+        weights = pd.Series(weights['0'])
 
     df_delta_ages = df_delta_ages * weights
-
     df_delta_ages.to_csv(f'{output_dir}/biomarker_delta_ages.csv', index=False)
 
     return df_delta_ages

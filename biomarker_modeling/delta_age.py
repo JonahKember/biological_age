@@ -17,7 +17,7 @@ def write_age_expected_values(feature_params):
     y = np.asarray(data_wide[feature])
 
     # Smooth function: highly penalized to reduce overfitting
-    age_expected_value = LinearGAM(s(0), lam=1e3).fit(X, y)
+    age_expected_value = LinearGAM(s(0), lam=5000).fit(X, y)
 
     age_values = np.arange(data_wide['age'].min(), data_wide['age'].max(), 1)
     expected_values = age_expected_value.predict(age_values)
